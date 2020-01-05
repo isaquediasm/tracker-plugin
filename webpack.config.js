@@ -45,20 +45,20 @@ var options = {
   module: {
     rules: [
       {
-        test: /\.css$/,
-        exclude: /node_modules/,
+        test: /\.s[ac]ss$/i,
         use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-            options: {
-              // you can specify a publicPath here
-              // by default it uses publicPath in webpackOptions.output
-              publicPath: '../',
-              hmr: process.env.NODE_ENV === 'development',
-            },
-          },
+          // Creates `style` nodes from JS strings
+          'style-loader',
+          // Translates CSS into CommonJS
           'css-loader',
+          // Compiles Sass to CSS
+          'sass-loader',
         ],
+      },
+      {
+        test: /\.css$/,
+
+        use: ['style-loader', 'css-loader'],
       },
       {
         test: new RegExp('.(' + fileExtensions.join('|') + ')$'),
@@ -82,6 +82,9 @@ var options = {
     extensions: fileExtensions
       .map(extension => '.' + extension)
       .concat(['.jsx', '.js', '.css']),
+    alias: {
+      'styled-components': path.resolve('node_modules/styled-components'),
+    },
   },
   plugins: [
     new MiniCssExtractPlugin({

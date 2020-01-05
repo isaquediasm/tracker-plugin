@@ -1,0 +1,20 @@
+@import '~antd/lib/pagination/style/index.css';
+@import '~antd/lib/form/style/index.css';
+@import '~antd/lib/drawer/style/index.css';
+@import '~antd/lib/grid/style/index.css';
+@import '~antd/lib/input/style/index.css';
+@import '~antd/lib/select/style/index.css';
+@import '~antd/lib/button/style/index.css';
+@import '~antd/lib/tree/style/index.css';
+@import '~antd/lib/checkbox/style/index.css';
+@import '~antd/lib/radio/style/index.css';
+@import '~antd/lib/typography/style/index.css';
+@import '~antd/lib/tooltip/style/index.css';
+
+.ant-drawer {
+  z-index: 999999999999 !important;
+}
+
+.ant-form-item label {
+  font-weight: 600;
+}

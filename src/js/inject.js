@@ -1,14 +1,14 @@
 import ContentScript from '../../framework/ContentScript';
 import Greeting from '../js/popup/greeting_component';
+import Wrapper from './components/Wrapper';
 import React from 'react';
 import { render } from 'react-dom';
+import { events } from './utils/events';
+import { createListeners } from './utils';
 
 class Inject extends ContentScript {
   constructor() {
     super();
-
-    const jwt = localStorage.getItem('jwt');
-    console.log('##state', jwt);
 
     window.onload = () => {
       const topbar = document.createElement('div');
@@ -26,33 +26,28 @@ class Inject extends ContentScript {
       /*      this.setState({ selectedElement: ev.target }); */
     };
 
-    document.addEventListener('click', ev => console.log('##click', ev));
+    setTimeout(this.updateDOM, 3000);
 
-    document.addEventListener('mouseenter', ev =>
-      console.log('##mouseenter', ev)
-    );
+    this.loadEvents();
+  }
 
-    document.addEventListener('change', ev => console.log('##change', ev));
-    document.addEventListener('select', ev => console.log('##select', ev));
+  // TODO: Validate if rules set is undefined
+  loadEvents = async () => {
+    const { data = [] } = await events.list();
 
-    /*   document.addEventListener('mouseover', ev => {
-      const { target } = ev;
-
-      if (
-        target.nodeName.toLowerCase() === 'a' ||
-        target.nodeName.toLowerCase() === 'button' ||
-        target.style.cursor === 'pointer'
-      ) {
-        console.log('##target', target.nodeName, target.style.cursor);
-
-        target.classList.add('activeElement');
-
-        target.addEventListener('click', ev => {
-          console.log('##out', ev.target);
+    setTimeout(() => {
+      for (let item of data) {
+        createListeners(item.rules, event => {
+          const value =
+            item.value === 'innerText' ? event.target.innerText : {};
+          console.log('##event', {
+            name: item.name,
+            value,
+          });
         });
       }
-    }); */
-  }
+    }, 3000);
+  };
 
   onClose = () => {
     this.state = { ...this.state, visible: false };
@@ -71,11 +66,72 @@ class Inject extends ContentScript {
     this.updateDOM(this.state);
   };
 
+  onSetCreate = () => {
+    document.addEventListener('mouseover', ev => {
+      console.log('##mouseover', ev);
+      const { target } = ev;
+      if (
+        !target.className.includes('tracker') &&
+        (target.nodeName.toLowerCase() === 'a' ||
+          target.nodeName.toLowerCase() === 'button' ||
+          getComputedStyle(target).cursor === 'pointer')
+      ) {
+        console.log('##target', target.nodeName, target.style.cursor);
+        target.classList.add('activeElement');
+
+        const { offsetHeight, offsetWidth } = target;
+        const { paddingTop, paddingLeft } = getComputedStyle(target);
+
+        console.log(
+          ` margin: calc((-${offsetHeight}px / 2) - ${paddingTop})  -${paddingLeft};`,
+          '\n',
+          paddingTop,
+          paddingLeft
+        );
+
+        /*  if (target.querySelector('.tracker-overlay') === null) {
+          const overlay = document.createElement('div');
+          overlay.classList.add('tracker-overlay');
+          overlay.setAttribute('id', 'tracker-overlay');
+
+          overlay.style = `
+          width: ${offsetWidth}px;
+          height: ${offsetHeight}px;
+          margin: calc((-${offsetHeight}px / 2) - ${paddingTop})  -${paddingLeft};
+          background: #ff000033;
+        `;
+
+          console.log(overlay.style);
+          target.appendChild(overlay);
+        } */
+
+        /*   target.addEventListener('mouseleave', ev => {
+          const elem = document.querySelector('#tracker-overlay');
+
+          elem.parentNode.removeChild(elem);
+          console.log('##removed');
+        }); */
+
+        target.addEventListener('click', ev => {
+          ev.stopPropagation();
+          ev.preventDefault();
+          console.log('##out', target);
+        });
+      }
+    });
+  };
+
   updateDOM = (props, onClose = this.onClose) => {
-    render(
-      <Greeting {...props} onClose={onClose} />,
-      window.document.getElementById('tracker-app-container')
-    );
+    setTimeout(() => {
+      const container = document.getElementById('tracker-app-container');
+
+      if (container === null) return this.updateDOM();
+
+      return render(
+        <Wrapper {...props} onSetCreate={this.onSetCreate} onClose={onClose} />,
+        window.document.getElementById('tracker-app-container')
+      );
+    }, 1000);
   };
 }
 

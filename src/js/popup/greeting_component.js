@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import icon from '../../img/icon-128.png';
 import { hot } from 'react-hot-loader';
+import { createListeners } from '../utils';
+import { events } from '../utils/events';
+import Table from 'antd/lib/table/index.js';
+import 'antd/lib/table/style/index.css';
+
 import './styles';
 
 const noop = () => false;
@@ -72,16 +77,12 @@ function GreetingComponent({
       activeElement.target.className}`
   );
 
-  const [rules, setRules] = useState({
-    '0': { tagName: 'A', classNames: [], id: null },
-    '1': { tagName: 'LI', classNames: ['LinkText'], id: null },
-    '3': { tagName: 'LI', classNames: ['ProductsNav'], id: null },
-  });
+  const [rules, setRules] = useState({});
 
   const [eventValue, setEventValue] = useState('');
 
-  console.log('##rules', rules);
-  console.log(
+  console.log('##rules', { rules, eventValue });
+  /* console.log(
     '##rules set',
     '\n',
     eventName,
@@ -91,43 +92,79 @@ function GreetingComponent({
       .map(key => `${rules[key].tagName}.${rules[key].classNames.join('.')}`)
       .reverse()
       .join(' > ')
-  );
+  ); */
+
+  const formatEvent = event => {
+    const value = eventValue === 'innerText' ? event.target.innerText : {};
+    console.log({
+      eventName,
+      value,
+    });
+  };
+
+  function highlightElements(elements) {
+    const selector = elements
+      .map(
+        el =>
+          `${el.tagName}${el.id ? `#${el.id}` : ''}${
+            el.className ? `.${el.className}` : ''
+          }`
+      )
+      .join(' ');
+
+    const list = document.querySelectorAll(selector);
+
+    if (!list.length) return;
+
+    for (let item of list) {
+      item.style = 'border: 5px solid red';
+    }
+  }
 
   const createEvent = () => {
-    const rulesSet = Object.keys(rules)
-      .sort((a, b) => b - a)
-      .map(key => rules[key]);
+    const rulesSet = Object.values(rules).reverse();
 
-    const lastParent = rulesSet[0];
-    const elements = document.getElementsByClassName(lastParent.classNames[0]);
+    events.create({ name: eventName, rules, value: eventValue });
+    // highlights matching elements on the UI
+    highlightElements(rulesSet);
 
-    console.log('##el', elements);
-
-    for (let el of elements) {
-      el.addEventListener(
-        'click',
-        function(event) {
-          const { path } = event;
-          event.preventDefault();
-          console.log('clicked', event.path[0].className);
-
-          const entries = Object.entries(rules);
-          const check = entries.filter(
-            ([idx, rule]) =>
-              path[idx].tagName === rule.tagName &&
-              (rule.classNames.length
-                ? path[idx].className.includes(rule.classNames[0])
-                : true)
-          );
-
-          if (check.length === entries.length) {
-            console.log('track this', check);
-          }
-        },
-        false
-      );
-    }
+    createListeners(rules);
+    setEventValue('');
+    setRules({});
   };
+
+  const dataSource = [
+    {
+      key: '1',
+      name: 'Mike',
+      age: 32,
+      address: '10 Downing Street',
+    },
+    {
+      key: '2',
+      name: 'John',
+      age: 42,
+      address: '10 Downing Street',
+    },
+  ];
+
+  const columns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Age',
+      dataIndex: 'age',
+      key: 'age',
+    },
+    {
+      title: 'Address',
+      dataIndex: 'address',
+      key: 'address',
+    },
+  ];
 
   return (
     <>
@@ -142,6 +179,8 @@ function GreetingComponent({
         <button style={{ float: 'right' }} onClick={onClose}>
           X
         </button>
+
+        <Table dataSource={dataSource} columns={columns} />
         <ul>
           <label forHtml='name'>Event Name: </label>
           <input
@@ -174,7 +213,7 @@ function GreetingComponent({
                     } else {
                       _rules[idx] = {
                         tagName: el.tagName,
-                        classNames: [],
+                        className: '',
                         id: null,
                       };
                     }
@@ -186,6 +225,18 @@ function GreetingComponent({
                   label={el.tagName}
                   value={el.tagName}
                 />
+                <Checkbox
+                  onChange={id => {
+                    setRules({
+                      ...rules,
+                      [idx]: {
+                        ...rules[idx],
+                        id,
+                      },
+                    });
+                  }}
+                  value={el.id}
+                />
                 {el.id && `#${el.id} `}
 
                 <ClassNameSelector
@@ -194,7 +245,7 @@ function GreetingComponent({
                       ...rules,
                       [idx]: {
                         ...rules[idx],
-                        classNames: [...rules[idx].classNames, className],
+                        className,
                       },
                     });
                   }}
@@ -205,7 +256,11 @@ function GreetingComponent({
         </ul>
         <ul>
           <h3>Value</h3>
-          <Checkbox label='InnerText' value={activeElement.target.innerText} />
+          <Checkbox
+            label='InnerText'
+            onChange={setEventValue}
+            value={'innerText'}
+          />
           <li>
             <input style={{ width: 200 }} type='text' value={eventValue} />
           </li>
