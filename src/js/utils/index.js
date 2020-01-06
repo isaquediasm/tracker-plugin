@@ -8,8 +8,6 @@ export function createListeners(rules, cb) {
     ? [document.getElementById(lastParent.id)]
     : [];
 
-  console.log('##el', elements);
-
   for (let el of elements) {
     el.addEventListener(
       'click',
@@ -69,4 +67,18 @@ export function createListeners(rules, cb) {
       false
     );
   }
+}
+
+export function findMatches(rules) {
+  const rulesSet = Object.values(rules).reverse();
+  const query = rulesSet
+    .map(
+      item =>
+        `${item.tagName}${item.id ? `#${item.id}` : ''}${
+          item.className && item.className.length ? `.${item.className}` : ''
+        }`
+    )
+    .join(' ');
+
+  return document.querySelectorAll(query);
 }

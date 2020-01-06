@@ -10,11 +10,12 @@
 @import '~antd/lib/radio/style/index.css';
 @import '~antd/lib/typography/style/index.css';
 @import '~antd/lib/tooltip/style/index.css';
+@import '~antd/lib/divider/style/index.css';
 
 .ant-drawer {
   z-index: 999999999999 !important;
 }
 
-.ant-form-item label {
+.ant-form-item-label label {
   font-weight: 600;
 }

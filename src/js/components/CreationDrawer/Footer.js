@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from 'antd';
 
-const Footer = ({ onClose, onSubmit }) => (
+const Footer = ({ onClose, onTest, onSubmit }) => (
   <div
     style={{
       position: 'absolute',
@@ -16,6 +16,9 @@ const Footer = ({ onClose, onSubmit }) => (
   >
     <Button onClick={onClose} style={{ marginRight: 8 }}>
       Cancel
+    </Button>
+    <Button onClick={onTest} style={{ marginRight: 8 }}>
+      See matches
     </Button>
     <Button onClick={onSubmit} type='primary'>
       Submit

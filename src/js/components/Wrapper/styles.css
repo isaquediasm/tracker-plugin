@@ -1,3 +1,5 @@
+@import '~antd/lib/message/style/index.css';
+
 .tracker-menu {
   position: relative;
   z-index: 99999;
@@ -10,18 +12,21 @@
   z-index: 9999;
 }
 
+.matchedElement {
+  outline-style: dashed !important;
+  outline-width: 3px !important;
+  outline-color: #43b0c1 !important;
+  outline-offset: 4px;
+}
+
 .activeElement {
-  transition: none !important;
+  outline-style: dashed !important;
+  outline-width: 2px !important;
+  outline-color: #43b0c1 !important;
 }
 
 .tracker-overlay {
   display: none;
-}
-
-.activeElement:hover {
-  outline-style: dashed !important;
-  outline-width: 2px !important;
-  outline-color: #43b0c1 !important;
 }
 
 .activeElement:hover .tracker-overlay {

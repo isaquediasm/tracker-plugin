@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Button,
   Radio,
@@ -10,7 +10,9 @@ import {
   Input,
   Select,
   Typography,
+  Divider,
 } from 'antd';
+import { findMatches } from '../../utils';
 import Footer from './Footer';
 import './styles.css';
 
@@ -34,17 +36,61 @@ function getElementTitle(element) {
 // TODO: Uncheck classes when tagName is unchecked
 const RulesTree = ({ nodes, onChange }) => {
   const { TreeNode } = Tree;
+  const [checkedKeys, setCheckedKeys] = useState([]);
 
-  const handleCheck = (list, ev) => {
+  const handleCheck = useCallback((list, ev) => {
     const { eventKey } = ev.node.props;
     const rule = JSON.parse(eventKey);
     const prop = rule.className ? 'className' : rule.tagName ? 'tagName' : 'id';
 
+    let checkedList = list.checked;
+    if (prop === 'tagName' && !ev.checked) {
+      checkedList = list.checked.filter(
+        item => JSON.parse(item).idx !== rule.idx
+      );
+    } else if (
+      prop !== 'tagName' &&
+      ev.checked &&
+      !list.checked.some(item => item.tagName && item.idx === rule.idx)
+    ) {
+      const parent = { idx: rule.idx, tagName: rule.parent.tagName };
+
+      checkedList = [...checkedList, JSON.stringify(parent)];
+
+      delete rule[prop].parent;
+
+      setCheckedKeys(checkedList);
+      onChange({
+        idx: rule.idx,
+        prop: 'tagName',
+        value: parent.tagName,
+        checked: true,
+      });
+      setTimeout(
+        onChange({
+          idx: rule.idx,
+          prop,
+          value: rule[prop],
+          checked: ev.checked,
+        }),
+        100
+      );
+
+      return;
+    }
+
+    setCheckedKeys(checkedList);
     onChange({ idx: rule.idx, prop, value: rule[prop], checked: ev.checked });
-  };
+  }, []);
 
   return (
-    <Tree onCheck={handleCheck} checkStrictly defaultExpandAll checkable>
+    <Tree
+      checkedKeys={checkedKeys}
+      onCheck={handleCheck}
+      checkStrictly
+      defaultExpandAll
+      checkable
+    >
       {nodes
         .filter(
           ({ tagName }) => tagName && tagName !== 'BODY' && tagName !== 'HTML'
@@ -54,16 +100,27 @@ const RulesTree = ({ nodes, onChange }) => {
             key={JSON.stringify({ idx, tagName: node.tagName })}
             title={node.tagName}
           >
-            {node.id && <TreeNode title={`#${node.id}`} />}
+            {node.id && (
+              <TreeNode
+                key={JSON.stringify({
+                  idx,
+                  id: node.id,
+                  parent: { tagName: node.tagName },
+                })}
+                title={`#${node.id}`}
+              />
+            )}
             {node.className.length &&
-              node.className
-                .split(' ')
-                .map((className, _idx) => (
-                  <TreeNode
-                    key={JSON.stringify({ idx, className })}
-                    title={`.${className}`}
-                  />
-                ))}
+              node.className.split(' ').map((className, _idx) => (
+                <TreeNode
+                  key={JSON.stringify({
+                    idx,
+                    className,
+                    parent: { tagName: node.tagName },
+                  })}
+                  title={`.${className}`}
+                />
+              ))}
           </TreeNode>
         ))}
       {/*  <TreeNode title='parent 1' key='0-0'>
@@ -89,34 +146,34 @@ const CreationDrawer = ({
   visible,
   onClose,
   onSubmit,
+  onTest,
+  currentEvent,
 }) => {
+  const propertyValues = ['innerText', 'href'];
+
   const [eventName, setEventName] = useState(getEventName(selectedElement));
+  const [eventValue, setEventValue] = useState(propertyValues[0]);
+  const [occurenceLimit, setOccurenceLimit] = useState(0);
   const [rules, setRules] = useState({});
   const [matches, setMatches] = useState(0);
   const { getFieldDecorator } = form;
 
-  const propertyValues = ['innertText', 'href'];
+  useEffect(() => {
+    if (!Object.keys(currentEvent).length) return;
+
+    console.log('##currEvent', currentEvent);
+    const { rules, eventName, eventValue, occurenceLimit } = currentEvent;
+
+    setEventName(eventName);
+    setRules(rules);
+    setEventValue(eventValue);
+    setOccurenceLimit(occurenceLimit);
+  }, [currentEvent]);
 
   const rulesValues = Object.values(rules);
   const handleNameChange = useCallback(value => {
     setEventName(value);
   }, []);
-
-  const findMatches = useCallback(_rules => {
-    const rulesSet = Object.values(_rules).reverse();
-
-    const query = rulesSet
-      .map(
-        item =>
-          `${item.tagName}${item.id ? `#${item.id}` : ''}${
-            item.className && item.className.length ? `.${item.className}` : ''
-          }`
-      )
-      .join(' ');
-
-    const results = document.querySelectorAll(query);
-    setMatches(results.length);
-  });
 
   const handleRuleChange = useCallback(({ idx, prop, value, checked }) => {
     const _rules = rules;
@@ -138,15 +195,30 @@ const CreationDrawer = ({
       }
     }
 
-    setRules(_rules);
-    findMatches(_rules);
-  });
+    setRules({ ..._rules });
+
+    const searchedMatches = findMatches(_rules);
+    setMatches(searchedMatches.length);
+  }, []);
+
+  const handleRadioChange = setter =>
+    useCallback(({ target }) => {
+      setter(target.value);
+    }, []);
+
+  const handleSubmit = () => {
+    onSubmit({ rules, eventName, eventValue, occurenceLimit });
+  };
+
+  const handleTest = () => {
+    onTest({ rules, eventName, eventValue, occurenceLimit });
+  };
 
   return (
     <Drawer
       className='tracker-drawer'
       title={
-        <Title onChange={handleNameChange} editable level={4}>
+        <Title editable={{ onChange: handleNameChange }} level={4}>
           {eventName}
         </Title>
       }
@@ -159,33 +231,36 @@ const CreationDrawer = ({
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item label='Event Value'>
-              {getFieldDecorator('radio-group')(
-                <Radio.Group onChange={console.log}>
-                  {propertyValues.map(item => (
-                    <Radio value={item}>{item}</Radio>
-                  ))}
-                </Radio.Group>
-              )}
+              <Radio.Group
+                value={eventValue}
+                onChange={handleRadioChange(setEventValue)}
+              >
+                {propertyValues.map(item => (
+                  <Radio value={item}>{item}</Radio>
+                ))}
+              </Radio.Group>
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item label='Matches'>
+            <Form.Item label='Event Occurence'>
+              <Radio.Group
+                onChange={handleRadioChange(setOccurenceLimit)}
+                value={occurenceLimit}
+              >
+                <Radio value={0}>Any match across the application</Radio>
+                <Radio value={1}>
+                  Only matches on this page ({window.location.pathname})
+                </Radio>
+              </Radio.Group>
+            </Form.Item>
+            {/*  <Form.Item label='Matches'>
               <p>
                 <strong>{matches}</strong> matched elements
               </p>{' '}
-              {!!rulesValues.length &&
-                rulesValues
-                  .map(
-                    item =>
-                      `${item.tagName}${
-                        item.className ? `.${item.className.join('.')}` : ''
-                      }`
-                  )
-                  .reverse()
-                  .join(' > ')}
-            </Form.Item>
+            </Form.Item> */}
           </Col>
         </Row>
+        <Divider style={{ marginTop: '-10px' }} />
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item label='Rules'>
@@ -195,9 +270,31 @@ const CreationDrawer = ({
               />
             </Form.Item>
           </Col>
+          <Col span={12}>
+            <Form.Item label='Matches'>
+              <p>
+                <strong>{matches}</strong> matched elements
+              </p>{' '}
+            </Form.Item>
+          </Col>
+
+          <Col span={12}>
+            <Form.Item label='Path'>
+              {!!rulesValues.length &&
+                rulesValues
+                  .map(
+                    item =>
+                      `${item.tagName}${item.id ? `#${item.id}` : ''}${
+                        item.className ? `.${item.className.join('.')}` : ''
+                      }`
+                  )
+                  .reverse()
+                  .join(' > ')}
+            </Form.Item>
+          </Col>
         </Row>
       </Form>
-      <Footer onClose={onClose} onSubmit={onSubmit} />
+      <Footer onTest={handleTest} onClose={onClose} onSubmit={handleSubmit} />
     </Drawer>
   );
 };
