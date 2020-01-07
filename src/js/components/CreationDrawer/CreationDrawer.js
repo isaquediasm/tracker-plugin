@@ -145,6 +145,7 @@ const CreationDrawer = ({
   form,
   visible,
   onClose,
+  onCancel,
   onSubmit,
   onTest,
   currentEvent,
@@ -294,7 +295,7 @@ const CreationDrawer = ({
           </Col>
         </Row>
       </Form>
-      <Footer onTest={handleTest} onClose={onClose} onSubmit={handleSubmit} />
+      <Footer onTest={handleTest} onCancel={onCancel} onSubmit={handleSubmit} />
     </Drawer>
   );
 };

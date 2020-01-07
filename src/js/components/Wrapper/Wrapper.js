@@ -94,8 +94,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
       ev.stopPropagation();
       ev.preventDefault();
 
-      setIsCreating(true);
       setSelectedElement(ev);
+      setIsCreating(true);
 
       document.removeEventListener('mouseover', documentListener);
       target.removeEventListener('click', clickListener);
@@ -106,13 +106,12 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     target.addEventListener('click', clickListener);
   }
   const createHighlight = () => {
-    if (!isEditing) return;
-
     document.addEventListener('mouseover', documentListener);
   };
 
-  const handleCreation = useCallback(() => {
+  const handleCreation = () => {
     notification.info({
+      className: 'tracker-notification',
       message: 'Select one element',
       description:
         'Please select an element to be tracked. You just need to click on it 😄',
@@ -120,7 +119,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     });
     setIsEditing(true);
     createHighlight();
-  });
+  };
 
   const handleTesting = ev => {
     const searchedMatches = findMatches(ev.rules);
@@ -152,23 +151,41 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     setIsCreating(true);
   };
 
+  const handleCancel = () => {
+    setIsEditing(false);
+    setIsCreating(false);
+  };
+
   return (
     <div className='tracker-menu'>
       {/* <Header isCreating={isCreating} /> */}
       <ActionButtons>
         {!isCreating && !isTesting && (
-          <Button
-            onClick={handleCreation}
-            type='primary'
-            size='large'
-            icon='plus'
-          >
-            Add new event
-          </Button>
+          <>
+            <Button style={{ marginRight: 8 }} size='large' type='default'>
+              See All Events
+            </Button>
+            <Button
+              onClick={handleCreation}
+              type='primary'
+              size='large'
+              icon='plus'
+            >
+              Add new 
+            </Button>
+          </>
         )}
 
         {isTesting && (
           <>
+            <Button
+              onClick={handleCancel}
+              style={{ marginRight: 8 }}
+              size='large'
+              type='default'
+            >
+              Cancel
+            </Button>
             <Button
               onClick={handleEdit}
               style={{ marginRight: 8 }}
@@ -189,7 +206,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
           selectedElement={selectedElement}
           currentEvent={currentEvent}
           visible={isCreating}
-          onClose={() => setIsCreating(false)}
+          onClose={handleCancel}
+          onCancel={handleCancel}
           onTest={handleTesting}
           onSubmit={handleSubmit}
         />
