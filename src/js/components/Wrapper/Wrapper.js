@@ -2,6 +2,7 @@ import React, { useCallback, useState, useMemo } from 'react';
 import { message, notification, Button } from 'antd';
 import CreationDrawer from '../CreationDrawer';
 import { findMatches } from '../../utils';
+import { isTagAllowed, isInteractive, isExternal } from '../../utils/validate';
 import 'antd/lib/button/style/index.css';
 import './antd.scss';
 import './styles.css';
@@ -62,24 +63,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
   function documentListener(ev) {
     const { target, path } = ev;
 
-    console.log('##listener triggered');
-    // those are the tags we support, mostly interactive tags (where the user can click on)
-    const allowedTags = ['span', 'div', 'a', 'button', 'select'];
-    // checks for allowed tagnames
-    const isTagAllowed = allowedTags.some(
-      tag => target.nodeName.toLowerCase() === tag
-    );
-    // checks if the element is interactive
-    const isInteractive =
-      getComputedStyle(target).cursor === 'pointer' ||
-      target.style.cursor === 'pointer';
-
-    // checks if the element is not part of our chrome plugin
-    const isExternal = !path.some(({ className = '' }) =>
-      className.includes('tracker')
-    );
-
-    if (!isTagAllowed || !isInteractive || !isExternal) return;
+    if (!isTagAllowed(target) || !isInteractive(target) || !isExternal(path))
+      return;
 
     const activeClass = 'activeElement';
 
@@ -152,6 +137,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
   };
 
   const handleCancel = () => {
+    classManipulation.removeAddedClass();
+    setIsTesting(false);
     setIsEditing(false);
     setIsCreating(false);
   };
@@ -171,7 +158,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
               size='large'
               icon='plus'
             >
-              Add new 
+              Add new
             </Button>
           </>
         )}
