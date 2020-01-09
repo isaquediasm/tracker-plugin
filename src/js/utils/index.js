@@ -1,3 +1,5 @@
+import { array } from 'prop-types';
+
 export function createListeners(rules, cb) {
   const rulesSet = Object.values(rules).reverse();
 
@@ -81,4 +83,20 @@ export function findMatches(rules) {
     .join(' ');
 
   return document.querySelectorAll(query);
+}
+
+export function joinClassNames(element) {
+  return new Array(...element.classList).join('.');
+}
+
+export function getElementIdentifier(element) {
+  if (!element.target) return element.nodeName;
+
+  const { target } = element;
+  const id = target.id ? `#${target.id}` : '';
+  const classNames = target.className.length
+    ? `.${joinClassNames(target.className)}`
+    : '';
+
+  return `${target.tagName}${id}${classNames}`;
 }

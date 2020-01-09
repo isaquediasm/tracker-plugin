@@ -1,6 +1,6 @@
 export function isTagAllowed(element) {
   // those are the tags we support, mostly interactive tags (where the user can click on)
-  const allowedTags = ['span', 'div', 'a', 'button', 'select'];
+  const allowedTags = ['span', 'div', 'a', 'button', 'select', 'li'];
 
   return allowedTags.some(tag => element.nodeName.toLowerCase() === tag);
 }

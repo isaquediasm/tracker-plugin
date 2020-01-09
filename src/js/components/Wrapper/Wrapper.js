@@ -1,11 +1,11 @@
 import React, { useCallback, useState, useMemo } from 'react';
-import { message, notification, Button } from 'antd';
+import { message, notification, Button, Dropdown } from 'antd';
 import CreationDrawer from '../CreationDrawer';
-import { findMatches } from '../../utils';
+import { findMatches, getElementIdentifier } from '../../utils';
 import { isTagAllowed, isInteractive, isExternal } from '../../utils/validate';
 import 'antd/lib/button/style/index.css';
 import './antd.scss';
-import './styles.css';
+import './styles.scss';
 
 const ActionButtons = ({ children }) => (
   <div className='tracker-add-button'>{children}</div>
@@ -51,7 +51,106 @@ function elementsManipulation() {
   };
 }
 
+function Listeners() {
+  let listeners = {};
+
+  return {
+    addListener: (element, trigger, fn) => {
+      const elementId = getElementIdentifier(element);
+      element.addEventListener(trigger, fn);
+
+      const currListener = listeners[elementId] || [];
+
+      listeners[elementId] = [...currListener, { element, trigger, fn }];
+    },
+
+    removeListeners: (element, trigger) => {
+      const elementId = getElementIdentifier(element);
+      const currListener = listeners[elementId];
+
+      if (!currListener) return;
+      const filteredList = currListener.filter(
+        item => item.trigger === trigger
+      );
+
+      for (let listener of filteredList) {
+        listener.element.removeEventListener(listener.trigger, listener.fn);
+      }
+
+      listeners[elementid] = filteredList;
+    },
+  };
+}
+
+function ClassNameService(className = 'activeElement', callback = () => false) {
+  const state = {
+    current: null,
+  };
+
+  const addTo = hostElement => {
+    if (state.current !== null) removeFrom(state.current);
+
+    hostElement.classList.add(className);
+    state.current = hostElement;
+  };
+
+  const removeFrom = hostElement => {
+    hostElement.classList.remove(className);
+    state.current = null;
+  };
+
+  return { addTo, removeFrom };
+}
+
+function TrackerCTA(newNode, callback = () => false) {
+  const state = {
+    current: null,
+  };
+
+  newNode.addEventListener('click', ev => {
+    ev.stopPropagation();
+    ev.preventDefault();
+    callback(ev);
+  });
+
+  const addTo = hostElement => {
+    if (state.current !== null) removeFrom(state.current);
+
+    hostElement.appendChild(newNode);
+    state.current = hostElement;
+  };
+
+  const removeFrom = hostElement => {
+    if (state.current === null) return;
+    hostElement.removeChild(newNode);
+    state.current = null;
+  };
+
+  return { addTo, removeFrom };
+}
+
+const listenerService = Listeners();
 const classManipulation = elementsManipulation();
+const newEl = document.createElement('div');
+newEl.innerText = '+';
+
+newEl.style.display = 'inline-block';
+newEl.style.position = 'absolute';
+newEl.style.left = '0';
+newEl.style.top = '-5px';
+/*  newNode.style.top = `${offsetTop + offsetHeight + 4}px`;
+newNode.style.left = `${offsetLeft}px`; */
+
+newEl.style.borderRadius = '4px';
+newEl.classList.add('tracker-cta');
+
+const trackerCTA = TrackerCTA(newEl, ev => {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  alert('clickou papai');
+});
+const activeClassName = ClassNameService();
 
 const Wrapper = ({ onClose, onSetCreate }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -66,17 +165,26 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     if (!isTagAllowed(target) || !isInteractive(target) || !isExternal(path))
       return;
 
-    const activeClass = 'activeElement';
+    activeClassName.addTo(target);
 
-    target.classList.add(activeClass);
+    // experimental
+    const {
+      offsetHeight,
+      offsetTop,
+      offsetLeft,
+      offsetBottom,
+      offsetRight,
+    } = target;
+
+    trackerCTA.addTo(target);
 
     target.addEventListener('mouseleave', ev => {
-      target.classList.remove(activeClass);
+      trackerCTA.removeFrom(target);
       console.log('##removed');
     });
 
     function clickListener(ev) {
-      ev.stopPropagation();
+      /*   ev.stopPropagation();
       ev.preventDefault();
 
       setSelectedElement(ev);
@@ -85,7 +193,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
       document.removeEventListener('mouseover', documentListener);
       target.removeEventListener('click', clickListener);
 
-      console.log('##out', target);
+      console.log('##out', target); */
     }
 
     target.addEventListener('click', clickListener);
@@ -113,7 +221,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     setIsCreating(false);
 
     setIsTesting(true);
-    document.addEventListener('click', ev => {
+
+    listenerService.addListener(document, 'click', ev => {
       ev.preventDefault();
       ev.stopPropagation();
     });
@@ -123,6 +232,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
   };
 
   const handleSubmit = ev => {
+    listenerService.removeListeners(document, 'click');
     setIsEditing(false);
     setIsCreating(false);
 
@@ -131,6 +241,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
 
   const handleEdit = () => {
     classManipulation.removeAddedClass();
+    listenerService.removeListeners(document, 'click');
     setIsTesting(false);
     setIsEditing(true);
     setIsCreating(true);
@@ -138,10 +249,19 @@ const Wrapper = ({ onClose, onSetCreate }) => {
 
   const handleCancel = () => {
     classManipulation.removeAddedClass();
+    listenerService.removeListeners(document, 'click');
     setIsTesting(false);
     setIsEditing(false);
     setIsCreating(false);
   };
+
+  /*   const eventsMenu = (
+    <Menu onClick={console.log}>
+      <Menu.Item key={'click'}>Click Event</Menu.Item>
+      <Menu.Item key={'modal'}>Modal Event</Menu.Item>
+      <Menu.Item key={'form'}>3rd item</Menu.Item>
+    </Menu>
+  ); */
 
   return (
     <div className='tracker-menu'>
@@ -152,6 +272,12 @@ const Wrapper = ({ onClose, onSetCreate }) => {
             <Button style={{ marginRight: 8 }} size='large' type='default'>
               See All Events
             </Button>
+
+            {/*  <Dropdown overlay={menu}>
+              <Button>
+                Add New <Icon type='down' />
+              </Button>
+            </Dropdown> */}
             <Button
               onClick={handleCreation}
               type='primary'

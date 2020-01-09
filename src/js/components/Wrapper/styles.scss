@@ -1,0 +1,69 @@
+@import '~antd/lib/message/style/index.css';
+
+.tracker-cta {
+  padding: 5px 8px;
+  background: #43b0c1af;
+  color: #fff;
+  font-size: 18px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin: 3px;
+  cursor: pointer;
+
+
+
+  &:hover {
+    background: #40bed1e8;
+  }
+}
+
+.tracker-menu {
+  position: relative;
+  z-index: 99999;
+}
+
+.tracker-menu .tracker-add-button {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  z-index: 9999;
+}
+
+.matchedElement {
+  outline-style: dashed !important;
+  outline-width: 3px !important;
+  outline-color: #43b0c1 !important;
+  outline-offset: 4px;
+}
+
+.activeElement {
+  position: relative !important;
+  outline-style: dashed !important;
+  outline-width: 1px !important;
+  outline-color: #43b0c1 !important;
+}
+
+.tracker-overlay {
+  display: none;
+}
+
+.activeElement:hover .tracker-overlay {
+  display: block;
+}
+
+.tracker-topbar {
+  position: fixed;
+  top: 0;
+}
+
+.tracker-topbar h3 {
+  font-size: 11px !important;
+}
+
+.tracker-header {
+  position: fixed;
+  left: 50%;
+  z-index: 9;
+  top: 0;
+  display: block;
+}
