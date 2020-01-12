@@ -11,8 +11,14 @@
 @import '~antd/lib/typography/style/index.css';
 @import '~antd/lib/tooltip/style/index.css';
 @import '~antd/lib/divider/style/index.css';
+@import '~antd/lib/dropdown/style/index.css';
+@import '~antd/lib/tooltip/style/index.css';
+@import '~antd/lib/table/style/index.css';
 
-.ant-drawer {
+
+.ant-select-dropdown,
+.ant-drawer,
+.tracker-element {
   z-index: 999999999999 !important;
 }
 

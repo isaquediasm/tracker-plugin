@@ -1,8 +1,10 @@
 import React, { useCallback, useState, useMemo } from 'react';
-import { message, notification, Button, Dropdown } from 'antd';
+import { message, notification, Button, Tooltip } from 'antd';
 import CreationDrawer from '../CreationDrawer';
 import { findMatches, getElementIdentifier } from '../../utils';
 import { isTagAllowed, isInteractive, isExternal } from '../../utils/validate';
+import { ListenerService } from '../../utils/listeners';
+
 import 'antd/lib/button/style/index.css';
 import './antd.scss';
 import './styles.scss';
@@ -51,37 +53,6 @@ function elementsManipulation() {
   };
 }
 
-function Listeners() {
-  let listeners = {};
-
-  return {
-    addListener: (element, trigger, fn) => {
-      const elementId = getElementIdentifier(element);
-      element.addEventListener(trigger, fn);
-
-      const currListener = listeners[elementId] || [];
-
-      listeners[elementId] = [...currListener, { element, trigger, fn }];
-    },
-
-    removeListeners: (element, trigger) => {
-      const elementId = getElementIdentifier(element);
-      const currListener = listeners[elementId];
-
-      if (!currListener) return;
-      const filteredList = currListener.filter(
-        item => item.trigger === trigger
-      );
-
-      for (let listener of filteredList) {
-        listener.element.removeEventListener(listener.trigger, listener.fn);
-      }
-
-      listeners[elementid] = filteredList;
-    },
-  };
-}
-
 function ClassNameService(className = 'activeElement', callback = () => false) {
   const state = {
     current: null,
@@ -94,42 +65,43 @@ function ClassNameService(className = 'activeElement', callback = () => false) {
     state.current = hostElement;
   };
 
-  const removeFrom = hostElement => {
-    hostElement.classList.remove(className);
+  const removeFrom = () => {
+    if (!state.current) return;
+    state.current.classList.remove(className);
     state.current = null;
   };
 
   return { addTo, removeFrom };
 }
 
-function TrackerCTA(newNode, callback = () => false) {
+function TrackerCTA(newNode) {
+  const listeners = new ListenerService();
   const state = {
     current: null,
+    node: null,
   };
 
-  newNode.addEventListener('click', ev => {
-    ev.stopPropagation();
-    ev.preventDefault();
-    callback(ev);
-  });
+  const addTo = (hostElement, cb = () => false) => {
+    if (state.current !== null) removeFrom();
 
-  const addTo = hostElement => {
-    if (state.current !== null) removeFrom(state.current);
-
+    listeners.addListener(newNode, 'click', cb);
     hostElement.appendChild(newNode);
+
     state.current = hostElement;
   };
 
-  const removeFrom = hostElement => {
-    if (state.current === null) return;
-    hostElement.removeChild(newNode);
+  const removeFrom = () => {
+    if (!state.current) return;
+
+    listeners.removeListeners(newNode, 'click');
+    state.current.removeChild(newNode);
+
     state.current = null;
   };
 
   return { addTo, removeFrom };
 }
-
-const listenerService = Listeners();
+const listenerService = new ListenerService();
 const classManipulation = elementsManipulation();
 const newEl = document.createElement('div');
 newEl.innerText = '+';
@@ -139,67 +111,62 @@ newEl.style.position = 'absolute';
 newEl.style.left = '0';
 newEl.style.top = '-5px';
 /*  newNode.style.top = `${offsetTop + offsetHeight + 4}px`;
-newNode.style.left = `${offsetLeft}px`; */
+  newNode.style.left = `${offsetLeft}px`; */
 
 newEl.style.borderRadius = '4px';
 newEl.classList.add('tracker-cta');
 
-const trackerCTA = TrackerCTA(newEl, ev => {
-  ev.preventDefault();
-  ev.stopPropagation();
+const trackerCTA = TrackerCTA(newEl);
 
-  alert('clickou papai');
-});
 const activeClassName = ClassNameService();
 
 const Wrapper = ({ onClose, onSetCreate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [isAddingRef, setIsAddingRef] = useState(false);
   const [selectedElement, setSelectedElement] = useState(null);
+  const [refElement, setRefElement] = useState(null);
   const [currentEvent, setCurrentEvent] = useState({});
 
-  function documentListener(ev) {
+  const documentListener = cb => ev => {
     const { target, path } = ev;
 
     if (!isTagAllowed(target) || !isInteractive(target) || !isExternal(path))
       return;
 
-    activeClassName.addTo(target);
+    cb(ev);
+  };
 
-    // experimental
-    const {
-      offsetHeight,
-      offsetTop,
-      offsetLeft,
-      offsetBottom,
-      offsetRight,
-    } = target;
+  const showAddButton = (target, cb) => {
+    return trackerCTA.addTo(target, async ev => {
+      console.log('##click called', ev.target);
+      ev.preventDefault();
+      ev.stopPropagation();
 
-    trackerCTA.addTo(target);
+      await cb(ev);
 
-    target.addEventListener('mouseleave', ev => {
-      trackerCTA.removeFrom(target);
-      console.log('##removed');
+      trackerCTA.removeFrom();
+      activeClassName.removeFrom();
+    });
+  };
+
+  const createHighlight = onClick => {
+    const docListener = documentListener(ev => {
+      const { target, path } = ev;
+      activeClassName.addTo(target);
+
+      showAddButton(target, ev => {
+        const element = {
+          target: ev.target.offsetParent,
+          path: ev.path.slice(1, ev.path.length),
+        };
+
+        onClick(element);
+      });
     });
 
-    function clickListener(ev) {
-      /*   ev.stopPropagation();
-      ev.preventDefault();
-
-      setSelectedElement(ev);
-      setIsCreating(true);
-
-      document.removeEventListener('mouseover', documentListener);
-      target.removeEventListener('click', clickListener);
-
-      console.log('##out', target); */
-    }
-
-    target.addEventListener('click', clickListener);
-  }
-  const createHighlight = () => {
-    document.addEventListener('mouseover', documentListener);
+    listenerService.addListener(document, 'mouseover', docListener);
   };
 
   const handleCreation = () => {
@@ -208,10 +175,14 @@ const Wrapper = ({ onClose, onSetCreate }) => {
       message: 'Select one element',
       description:
         'Please select an element to be tracked. You just need to click on it 😄',
-      duration: 10,
     });
     setIsEditing(true);
-    createHighlight();
+
+    // create hightlight and cta btn on the selected elementn
+    createHighlight(element => {
+      setSelectedElement(element);
+      setIsCreating(true);
+    });
   };
 
   const handleTesting = ev => {
@@ -241,7 +212,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
 
   const handleEdit = () => {
     classManipulation.removeAddedClass();
-    listenerService.removeListeners(document, 'click');
+    listenerService.removeAll();
+
     setIsTesting(false);
     setIsEditing(true);
     setIsCreating(true);
@@ -249,10 +221,23 @@ const Wrapper = ({ onClose, onSetCreate }) => {
 
   const handleCancel = () => {
     classManipulation.removeAddedClass();
-    listenerService.removeListeners(document, 'click');
+    listenerService.removeAll();
+
     setIsTesting(false);
     setIsEditing(false);
     setIsCreating(false);
+  };
+
+  const handleAddRefMode = () => {
+    setIsCreating(false);
+    setIsAddingRef(true);
+    message.info('Please select the reference element');
+
+    createHighlight(element => {
+      setRefElement(element);
+      setIsCreating(true);
+      setIsAddingRef(false);
+    });
   };
 
   /*   const eventsMenu = (
@@ -262,7 +247,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
       <Menu.Item key={'form'}>3rd item</Menu.Item>
     </Menu>
   ); */
-
+  console.log('##re-rendered', isEditing, isCreating, selectedElement);
   return (
     <div className='tracker-menu'>
       {/* <Header isCreating={isCreating} /> */}
@@ -317,12 +302,14 @@ const Wrapper = ({ onClose, onSetCreate }) => {
       {isEditing && selectedElement && (
         <CreationDrawer
           selectedElement={selectedElement}
+          refElement={refElement}
           currentEvent={currentEvent}
           visible={isCreating}
           onClose={handleCancel}
           onCancel={handleCancel}
           onTest={handleTesting}
           onSubmit={handleSubmit}
+          onAddRef={handleAddRefMode}
         />
       )}
     </div>

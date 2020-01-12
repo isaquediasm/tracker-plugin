@@ -73,6 +73,9 @@ export function createListeners(rules, cb) {
 
 export function findMatches(rules) {
   const rulesSet = Object.values(rules).reverse();
+
+  if (!rulesSet.length) return [];
+
   const query = rulesSet
     .map(
       item =>
@@ -85,18 +88,24 @@ export function findMatches(rules) {
   return document.querySelectorAll(query);
 }
 
-export function joinClassNames(element) {
-  return new Array(...element.classList).join('.');
+export function joinClassNames(classNames) {
+  return new Array(classNames).join('.');
 }
 
 export function getElementIdentifier(element) {
-  if (!element.target) return element.nodeName;
+  try {
+    const target = element.target ? target : element;
 
-  const { target } = element;
-  const id = target.id ? `#${target.id}` : '';
-  const classNames = target.className.length
-    ? `.${joinClassNames(target.className)}`
-    : '';
+    const id = target.id ? `#${target.id}` : '';
+    const classNames =
+      target.className && target.className.length
+        ? `.${joinClassNames(target.className)}`
+        : '';
 
-  return `${target.tagName}${id}${classNames}`;
+    const tagName = target.tagName || target.nodeName;
+
+    return `${tagName}${id}${classNames}`;
+  } catch (e) {
+    return '';
+  }
 }

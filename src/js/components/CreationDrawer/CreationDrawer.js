@@ -10,7 +10,9 @@ import {
   Input,
   Select,
   Typography,
+  Tooltip,
   Divider,
+  Table,
 } from 'antd';
 import { findMatches } from '../../utils';
 import Footer from './Footer';
@@ -140,6 +142,66 @@ const RulesTree = ({ nodes, onChange }) => {
 };
 
 const { Title } = Typography;
+const { Option } = Select;
+
+const ValueTable = ({ data }) => {
+  const columns = [
+    {
+      title: 'Prop Name',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Value',
+      dataIndex: 'value',
+      key: 'value',
+    },
+
+    {
+      title: 'Current Value',
+      dataIndex: 'current',
+      key: 'current',
+    },
+
+    {
+      title: 'Action',
+      key: 'action',
+      render: (text, record) => (
+        <span>
+          <a>Delete</a>
+        </span>
+      ),
+    },
+  ];
+
+  /* const data = [
+    {
+      key: '1',
+      name: 'innerText',
+      value: 'innerText',
+      current: 'Add ',
+    },
+    {
+      key: '2',
+      name: 'href',
+      value: 'href',
+    },
+    {
+      key: '3',
+      name: 'data-id',
+      value: 'data-id',
+    },
+  ];
+ */
+  return (
+    <Table
+      pagination={{ position: 'none' }}
+      size='small'
+      columns={columns}
+      dataSource={data}
+    />
+  );
+};
 const CreationDrawer = ({
   selectedElement,
   form,
@@ -147,18 +209,43 @@ const CreationDrawer = ({
   onClose,
   onCancel,
   onSubmit,
+  onAddRef,
   onTest,
   currentEvent,
+  refElement,
 }) => {
-  const propertyValues = ['innerText', 'href'];
-
   const [eventName, setEventName] = useState(getEventName(selectedElement));
-  const [eventValue, setEventValue] = useState(propertyValues[0]);
+  const [eventValue, setEventValue] = useState();
   const [occurenceLimit, setOccurenceLimit] = useState(0);
   const [rules, setRules] = useState({});
   const [matches, setMatches] = useState(0);
   const { getFieldDecorator } = form;
 
+  const allowedAttributes = ['role', 'data'];
+  const allowedValues = ['innerText'];
+
+  const propertyValues = [
+    ...new Array(...selectedElement.target.attributes)
+      .map(attr => attr.name)
+      .filter(attr => allowedAttributes.includes(attr)),
+  ];
+
+  const tableData = element => [
+    ...allowedValues.map(item => ({
+      name: item,
+      value: item,
+      current: element.item,
+    })),
+    ...propertyValues.map((item, key) => ({
+      name: item,
+      value: item,
+      current: element.getAttribute(item),
+    })),
+  ];
+
+  const getAvailableProps = element => element;
+
+  console.log('##attributes', propertyValues);
   useEffect(() => {
     if (!Object.keys(currentEvent).length) return;
 
@@ -215,6 +302,11 @@ const CreationDrawer = ({
     onTest({ rules, eventName, eventValue, occurenceLimit });
   };
 
+  const isValid = () => {
+    return Object.keys(rules).length;
+  };
+  console.log('##ref', refElement);
+
   return (
     <Drawer
       className='tracker-drawer'
@@ -230,19 +322,32 @@ const CreationDrawer = ({
     >
       <Form layout='vertical' hideRequiredMark>
         <Row gutter={16}>
-          <Col span={12}>
+          <Col span={24}>
             <Form.Item label='Event Value'>
-              <Radio.Group
-                value={eventValue}
+              {/*  <Select
+                mode='multiple'
+                dropdownClassName='tracker-dropdown'
+                  value={eventValue}
                 onChange={handleRadioChange(setEventValue)}
+                placeholder='Attribute Value'
               >
                 {propertyValues.map(item => (
-                  <Radio value={item}>{item}</Radio>
+                  <Option key={item}>{item}</Option>
                 ))}
-              </Radio.Group>
+              </Select>
+              <Tooltip
+                className='tracker-element'
+                placement='top'
+                title='You can add an reference element to provide the value to this event'
+              >
+                <Button onClick={onAddRef} type='link' size='small'>
+                  Add reference element
+                </Button>
+              </Tooltip> */}
+              <ValueTable data={tableData(selectedElement.target)} />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          {/* <Col span={12}>
             <Form.Item label='Event Occurence'>
               <Radio.Group
                 onChange={handleRadioChange(setOccurenceLimit)}
@@ -254,17 +359,13 @@ const CreationDrawer = ({
                 </Radio>
               </Radio.Group>
             </Form.Item>
-            {/*  <Form.Item label='Matches'>
-              <p>
-                <strong>{matches}</strong> matched elements
-              </p>{' '}
-            </Form.Item> */}
-          </Col>
+            
+          </Col> */}
         </Row>
         <Divider style={{ marginTop: '-10px' }} />
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item label='Rules'>
+            <Form.Item label='Trigger Elements'>
               <RulesTree
                 onChange={handleRuleChange}
                 nodes={selectedElement.path}
@@ -295,7 +396,12 @@ const CreationDrawer = ({
           </Col>
         </Row>
       </Form>
-      <Footer onTest={handleTest} onCancel={onCancel} onSubmit={handleSubmit} />
+      <Footer
+        isValid={isValid}
+        onTest={handleTest}
+        onCancel={onCancel}
+        onSubmit={handleSubmit}
+      />
     </Drawer>
   );
 };
