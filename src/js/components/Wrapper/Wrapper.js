@@ -4,6 +4,7 @@ import CreationDrawer from '../CreationDrawer';
 import { findMatches, getElementIdentifier } from '../../utils';
 import { isTagAllowed, isInteractive, isExternal } from '../../utils/validate';
 import { ListenerService } from '../../utils/listeners';
+import { CreationProvider } from '../CreationContext';
 
 import 'antd/lib/button/style/index.css';
 import './antd.scss';
@@ -99,7 +100,9 @@ function TrackerCTA(newNode) {
     state.current = null;
   };
 
-  return { addTo, removeFrom };
+  const getInstance = () => state.current;
+
+  return { addTo, removeFrom, getInstance };
 }
 const listenerService = new ListenerService();
 const classManipulation = elementsManipulation();
@@ -146,7 +149,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
 
       await cb(ev);
 
-      trackerCTA.removeFrom();
+      /* trackerCTA.removeFrom(); */
       activeClassName.removeFrom();
     });
   };
@@ -180,6 +183,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
 
     // create hightlight and cta btn on the selected elementn
     createHighlight(element => {
+      trackerCTA.removeFrom();
+
       setSelectedElement(element);
       setIsCreating(true);
     });
@@ -300,17 +305,19 @@ const Wrapper = ({ onClose, onSetCreate }) => {
       </ActionButtons>
 
       {isEditing && selectedElement && (
-        <CreationDrawer
-          selectedElement={selectedElement}
-          refElement={refElement}
-          currentEvent={currentEvent}
-          visible={isCreating}
-          onClose={handleCancel}
-          onCancel={handleCancel}
-          onTest={handleTesting}
-          onSubmit={handleSubmit}
-          onAddRef={handleAddRefMode}
-        />
+        <CreationProvider selectedElement={selectedElement}>
+          <CreationDrawer
+            selectedElement={selectedElement}
+            refElement={refElement}
+            currentEvent={currentEvent}
+            visible={isCreating}
+            onClose={handleCancel}
+            onCancel={handleCancel}
+            onTest={handleTesting}
+            onSubmit={handleSubmit}
+            onAddRef={handleAddRefMode}
+          />
+        </CreationProvider>
       )}
     </div>
   );

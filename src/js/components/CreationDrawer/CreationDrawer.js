@@ -15,6 +15,8 @@ import {
   Table,
 } from 'antd';
 import { findMatches } from '../../utils';
+import EditableTable from '../EditableTable';
+import ValueTable from '../ValueTable';
 import Footer from './Footer';
 import './styles.css';
 
@@ -144,64 +146,6 @@ const RulesTree = ({ nodes, onChange }) => {
 const { Title } = Typography;
 const { Option } = Select;
 
-const ValueTable = ({ data }) => {
-  const columns = [
-    {
-      title: 'Prop Name',
-      dataIndex: 'name',
-      key: 'name',
-    },
-    {
-      title: 'Value',
-      dataIndex: 'value',
-      key: 'value',
-    },
-
-    {
-      title: 'Current Value',
-      dataIndex: 'current',
-      key: 'current',
-    },
-
-    {
-      title: 'Action',
-      key: 'action',
-      render: (text, record) => (
-        <span>
-          <a>Delete</a>
-        </span>
-      ),
-    },
-  ];
-
-  /* const data = [
-    {
-      key: '1',
-      name: 'innerText',
-      value: 'innerText',
-      current: 'Add ',
-    },
-    {
-      key: '2',
-      name: 'href',
-      value: 'href',
-    },
-    {
-      key: '3',
-      name: 'data-id',
-      value: 'data-id',
-    },
-  ];
- */
-  return (
-    <Table
-      pagination={{ position: 'none' }}
-      size='small'
-      columns={columns}
-      dataSource={data}
-    />
-  );
-};
 const CreationDrawer = ({
   selectedElement,
   form,
@@ -221,31 +165,8 @@ const CreationDrawer = ({
   const [matches, setMatches] = useState(0);
   const { getFieldDecorator } = form;
 
-  const allowedAttributes = ['role', 'data'];
-  const allowedValues = ['innerText'];
-
-  const propertyValues = [
-    ...new Array(...selectedElement.target.attributes)
-      .map(attr => attr.name)
-      .filter(attr => allowedAttributes.includes(attr)),
-  ];
-
-  const tableData = element => [
-    ...allowedValues.map(item => ({
-      name: item,
-      value: item,
-      current: element.item,
-    })),
-    ...propertyValues.map((item, key) => ({
-      name: item,
-      value: item,
-      current: element.getAttribute(item),
-    })),
-  ];
-
   const getAvailableProps = element => element;
 
-  console.log('##attributes', propertyValues);
   useEffect(() => {
     if (!Object.keys(currentEvent).length) return;
 
@@ -344,7 +265,8 @@ const CreationDrawer = ({
                   Add reference element
                 </Button>
               </Tooltip> */}
-              <ValueTable data={tableData(selectedElement.target)} />
+              {/*   <EditableTable data={tableData(selectedElement.target)} /> */}
+              <ValueTable onEdit={console.log} />
             </Form.Item>
           </Col>
           {/* <Col span={12}>
