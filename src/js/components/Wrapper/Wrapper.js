@@ -185,6 +185,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     createHighlight(element => {
       trackerCTA.removeFrom();
 
+      listenerService.removeAll(document, 'mouseover');
       setSelectedElement(element);
       setIsCreating(true);
     });

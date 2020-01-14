@@ -14,12 +14,17 @@
 @import '~antd/lib/dropdown/style/index.css';
 @import '~antd/lib/tooltip/style/index.css';
 @import '~antd/lib/table/style/index.css';
+@import '~antd/lib/modal/style/index.css';
 
 
-.ant-select-dropdown,
 .ant-drawer,
 .tracker-element {
-  z-index: 999999999999 !important;
+  z-index: 1000000 !important;
+}
+
+.ant-select-dropdown,
+.tracker-modal {
+  z-index: 10000000 !important;
 }
 
 .ant-form-item-label label {
