@@ -46,7 +46,7 @@ const EventsDrawer = ({ events, visible = false, onClose }) => {
       title='Created Events'
       placement='right'
       closable
-      width={400}
+      width={700}
       onClose={onClose}
       visible={visible}
     >

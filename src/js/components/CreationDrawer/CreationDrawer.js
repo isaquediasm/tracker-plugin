@@ -19,6 +19,8 @@ import { findMatches } from '../../utils';
 import EditableTable from '../EditableTable';
 import ValueTable from '../ValueTable';
 import Footer from './Footer';
+import { availableTriggers } from '../../settings/triggers';
+
 import './styles.css';
 
 const { Step } = Steps;
@@ -167,6 +169,8 @@ const CreationDrawer = ({
   const [rules, setRules] = useState({});
   const [matches, setMatches] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
+  const [triggers, setTriggers] = useState({});
+  const [selectedTrigger, setSelectedTrigger] = useState('click');
   const { getFieldDecorator } = form;
 
   const getAvailableProps = element => element;
@@ -182,6 +186,10 @@ const CreationDrawer = ({
     setEventValue(eventValue);
     setOccurenceLimit(occurenceLimit);
   }, [currentEvent]);
+
+  useEffect(() => {
+    setTriggers(availableTriggers(selectedElement));
+  }, [selectedElement]);
 
   const rulesValues = Object.values(rules);
   const handleNameChange = useCallback(value => {
@@ -245,6 +253,11 @@ const CreationDrawer = ({
 
   const handleChangeStep = step => setCurrentStep(step);
 
+  const handleChangeTrigger = val => {
+    setSelectedTrigger(val);
+  };
+
+  console.log('##triggers', triggers);
   return (
     <Drawer
       className='tracker-drawer'
@@ -261,78 +274,85 @@ const CreationDrawer = ({
       >
         <Step title='Settings' />
         <Step
-          status={
+          /*  status={
             Object.keys(rules).length && currentStep !== 1
               ? 'finish'
               : 'process'
-          }
+          } */
           title='Element'
         />
         <Step disabled={!Object.keys(rules).length} title='Event Value' />
       </Steps>
       <br />
-      <Row gutter={16}>
-        {currentStep === 0 && (
-          <>
-            <Col span={12}>
-              <Form.Item label='Event Name'>
-                <Input onChange={console.log} defaultValue={eventName} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label='Event Trigger'>
+
+      {currentStep === 0 && (
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label='Event Name'>
+              <Input onChange={console.log} defaultValue={eventName} />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label='Event Trigger'>
               <Select
-                
                 dropdownClassName='tracker-dropdown'
-             
-                onChange={console.log}
-  
+                defaultValue={selectedTrigger}
+                style={{ width: '100%' }}
+                onChange={handleChangeTrigger}
               >
-                <Option key={1}>teste</Option>
-               
+                {triggers.events &&
+                  triggers.events.map(item => (
+                    <Option key={item.name}>
+                      <Tooltip
+                        key={item.name}
+                        placement='top'
+                        title={item.description}
+                      >
+                        {item.name}
+                      </Tooltip>
+                    </Option>
+                  ))}
               </Select>
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item label='Event Occurence'>
-                <Radio.Group
-                  onChange={handleRadioChange}
-                  value={occurenceLimit}
-                >
-                  <Radio value={0}>Any match across the application</Radio>
-                  <Radio value={1}>
-                    Only matches on this page ({window.location.pathname})
-                  </Radio>
-                </Radio.Group>
-              </Form.Item>
-            </Col>
-          </>
-        )}
+            </Form.Item>
+          </Col>
+          <Col span={24}>
+            <Form.Item label='Event Occurence'>
+              <Radio.Group onChange={handleRadioChange} value={occurenceLimit}>
+                <Radio value={0}>Any match across the application</Radio>
+                <Radio value={1}>
+                  Only matches on this page ({window.location.pathname})
+                </Radio>
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+        </Row>
+      )}
 
-        {currentStep === 1 && (
-          <>
-            <Col span={12}>
-              <RulesTree
-                onChange={handleRuleChange}
-                nodes={selectedElement.path}
-              />
-            </Col>
-            <Col span={12}>
-              <Form.Item label='Matches'>
-                <p>
-                  <strong>{matches}</strong> matched elements
-                </p>{' '}
-              </Form.Item>
-            </Col>
-          </>
-        )}
+      {currentStep === 1 && (
+        <Row gutter={16}>
+          <Col span={12}>
+            <RulesTree
+              onChange={handleRuleChange}
+              nodes={selectedElement.path}
+            />
+          </Col>
+          <Col span={12}>
+            <Form.Item label='Matches'>
+              <p>
+                <strong>{matches}</strong> matched elements
+              </p>{' '}
+            </Form.Item>
+          </Col>
+        </Row>
+      )}
 
-        {currentStep === 2 && (
+      {currentStep === 2 && (
+        <Row gutter={16}>
           <Col span={24}>
             <ValueTable value={eventValue} onChange={handleEventValueChange} />
           </Col>
-        )}
-      </Row>
+        </Row>
+      )}
 
       {/* <Form layout='vertical' hideRequiredMark>
         <Row gutter={16}>
