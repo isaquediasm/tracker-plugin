@@ -27,8 +27,7 @@ const EditingModal = Form.create()(
 
         onOk({
           ...fieldsValue,
-          current: options.find(el => el.attribute === fieldsValue.attribute)
-            .current,
+          ...options.find(el => el.attribute === fieldsValue.attribute),
         });
       });
     }, []);
@@ -91,7 +90,7 @@ const EditingModal = Form.create()(
   }
 );
 
-const ValueTable = ({ onEdit }) => {
+const ValueTable = ({ onChange, value = null }) => {
   const [data, setData] = useState([]);
   const [attributeOptions, setAttributeOptions] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -108,14 +107,20 @@ const ValueTable = ({ onEdit }) => {
   ];
 
   useEffect(() => {
+    if (value) setData(value);
+  }, [value]);
+
+  useEffect(() => {
     let options = [
       ...allowedValues.map(item => ({
         name: item,
+        type: 'property',
         attribute: item,
         current: selectedElement.target[item],
       })),
       ...propertyValues.map((item, key) => ({
         name: item,
+        type: 'attribute',
         attribute: item,
         current: selectedElement.target.getAttribute(item),
       })),
@@ -123,13 +128,18 @@ const ValueTable = ({ onEdit }) => {
 
     setData(options);
     setAttributeOptions(options);
+    onChange(options);
   }, [selectedElement]);
 
-  const handleDelete = useCallback(record => {
-    const newData = data.filter(item => item.name !== record.name);
+  const handleDelete = useCallback(
+    record => {
+      const newData = data.filter(item => item.name !== record.name);
 
-    setData(newData);
-  }, [data]);
+      setData(newData);
+      onChange(newData);
+    },
+    [data]
+  );
 
   const columns = [
     {
@@ -154,7 +164,6 @@ const ValueTable = ({ onEdit }) => {
       key: 'action',
       render: (text, record) => (
         <span>
-          <a onClick={() => onEdit(record)}>Edit</a>{' '}
           <a onClick={() => handleDelete(record)}>Delete</a>
         </span>
       ),
@@ -163,8 +172,10 @@ const ValueTable = ({ onEdit }) => {
 
   const handleSave = useCallback(
     newAttr => {
-      setData([...data, newAttr]);
+      const newData = [...data, newAttr];
+      setData(newData);
       setIsEditing(false);
+      onChange(newData);
     },
     [data]
   );
@@ -176,6 +187,7 @@ const ValueTable = ({ onEdit }) => {
     <>
       <a onClick={handleNew}>Add new</a>
       <Table
+        /*  title={() => 'Event Value'} */
         pagination={{ position: 'none' }}
         size='small'
         columns={columns}

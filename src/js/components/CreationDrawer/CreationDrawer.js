@@ -13,12 +13,15 @@ import {
   Tooltip,
   Divider,
   Table,
+  Steps,
 } from 'antd';
 import { findMatches } from '../../utils';
 import EditableTable from '../EditableTable';
 import ValueTable from '../ValueTable';
 import Footer from './Footer';
 import './styles.css';
+
+const { Step } = Steps;
 
 function getEventName(element) {
   const basePrefix = 'Clicked on';
@@ -163,6 +166,7 @@ const CreationDrawer = ({
   const [occurenceLimit, setOccurenceLimit] = useState(0);
   const [rules, setRules] = useState({});
   const [matches, setMatches] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
   const { getFieldDecorator } = form;
 
   const getAvailableProps = element => element;
@@ -181,7 +185,7 @@ const CreationDrawer = ({
 
   const rulesValues = Object.values(rules);
   const handleNameChange = useCallback(value => {
-    setEventName(value);
+    console.log('##value', value);
   }, []);
 
   const handleRuleChange = useCallback(({ idx, prop, value, checked }) => {
@@ -210,46 +214,135 @@ const CreationDrawer = ({
     setMatches(searchedMatches.length);
   }, []);
 
-  const handleRadioChange = setter =>
-    useCallback(({ target }) => {
-      setter(target.value);
-    }, []);
+  const handleRadioChange = useCallback(({ target }) => {
+    setOccurenceLimit(target.value);
+  }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
+    if (currentStep < 2) {
+      setCurrentStep(currentStep + 1);
+      return;
+    }
+
     onSubmit({ rules, eventName, eventValue, occurenceLimit });
-  };
+  }, [currentStep, rules, eventName, eventValue, occurenceLimit]);
 
   const handleTest = () => {
     onTest({ rules, eventName, eventValue, occurenceLimit });
   };
 
-  const isValid = () => {
-    return Object.keys(rules).length;
+  const isFormValid = () => {
+    const hasRules = Object.keys(rules).length > 0 && matches > 0;
+
+    if (currentStep === 0) return true;
+
+    return currentStep === 0 || hasRules;
   };
-  console.log('##ref', refElement);
+
+  const handleEventValueChange = useCallback(value => {
+    setEventValue(value);
+  }, []);
+
+  const handleChangeStep = step => setCurrentStep(step);
 
   return (
     <Drawer
       className='tracker-drawer'
-      title={
-        <Title editable={{ onChange: handleNameChange }} level={4}>
-          {eventName}
-        </Title>
-      }
       width={720}
       onClose={onClose}
       visible={visible}
       bodyStyle={{ paddingBottom: 80 }}
     >
-      <Form layout='vertical' hideRequiredMark>
+      <Steps
+        type='navigation'
+        size='small'
+        onChange={handleChangeStep}
+        current={currentStep}
+      >
+        <Step title='Settings' />
+        <Step
+          status={
+            Object.keys(rules).length && currentStep !== 1
+              ? 'finish'
+              : 'process'
+          }
+          title='Element'
+        />
+        <Step disabled={!Object.keys(rules).length} title='Event Value' />
+      </Steps>
+      <br />
+      <Row gutter={16}>
+        {currentStep === 0 && (
+          <>
+            <Col span={12}>
+              <Form.Item label='Event Name'>
+                <Input onChange={console.log} defaultValue={eventName} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label='Event Trigger'>
+              <Select
+                
+                dropdownClassName='tracker-dropdown'
+             
+                onChange={console.log}
+  
+              >
+                <Option key={1}>teste</Option>
+               
+              </Select>
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item label='Event Occurence'>
+                <Radio.Group
+                  onChange={handleRadioChange}
+                  value={occurenceLimit}
+                >
+                  <Radio value={0}>Any match across the application</Radio>
+                  <Radio value={1}>
+                    Only matches on this page ({window.location.pathname})
+                  </Radio>
+                </Radio.Group>
+              </Form.Item>
+            </Col>
+          </>
+        )}
+
+        {currentStep === 1 && (
+          <>
+            <Col span={12}>
+              <RulesTree
+                onChange={handleRuleChange}
+                nodes={selectedElement.path}
+              />
+            </Col>
+            <Col span={12}>
+              <Form.Item label='Matches'>
+                <p>
+                  <strong>{matches}</strong> matched elements
+                </p>{' '}
+              </Form.Item>
+            </Col>
+          </>
+        )}
+
+        {currentStep === 2 && (
+          <Col span={24}>
+            <ValueTable value={eventValue} onChange={handleEventValueChange} />
+          </Col>
+        )}
+      </Row>
+
+      {/* <Form layout='vertical' hideRequiredMark>
         <Row gutter={16}>
           <Col span={24}>
-            <Form.Item label='Event Value'>
-              {/*  <Select
+            <Form.Item>
+              <Select
                 mode='multiple'
                 dropdownClassName='tracker-dropdown'
                   value={eventValue}
-                onChange={handleRadioChange(setEventValue)}
+                onChang e={handleRadioChange(setEventValue)}
                 placeholder='Attribute Value'
               >
                 {propertyValues.map(item => (
@@ -264,12 +357,17 @@ const CreationDrawer = ({
                 <Button onClick={onAddRef} type='link' size='small'>
                   Add reference element
                 </Button>
-              </Tooltip> */}
-              {/*   <EditableTable data={tableData(selectedElement.target)} /> */}
-              <ValueTable onEdit={console.log} />
+              </Tooltip>
+               <EditableTable data={tableData(selectedElement.target)} />
+              <ValueTable
+                value={eventValue}
+                onChange={handleEventValueChange}
+              />
             </Form.Item>
           </Col>
-          {/* <Col span={12}>
+        </Row>
+        <Row gutter={16}>
+          <Col span={24}>
             <Form.Item label='Event Occurence'>
               <Radio.Group
                 onChange={handleRadioChange(setOccurenceLimit)}
@@ -281,10 +379,9 @@ const CreationDrawer = ({
                 </Radio>
               </Radio.Group>
             </Form.Item>
-            
-          </Col> */}
+          </Col>
         </Row>
-        <Divider style={{ marginTop: '-10px' }} />
+
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item label='Trigger Elements'>
@@ -317,13 +414,20 @@ const CreationDrawer = ({
             </Form.Item>
           </Col>
         </Row>
-      </Form>
-      <Footer
-        isValid={isValid}
-        onTest={handleTest}
-        onCancel={onCancel}
-        onSubmit={handleSubmit}
-      />
+      </Form> */}
+      <Footer>
+        <Button onClick={onCancel} style={{ marginRight: 8 }}>
+          Cancel
+        </Button>
+        {matches > 0 && (
+          <Button onClick={handleTest} style={{ marginRight: 8 }}>
+            See matches
+          </Button>
+        )}
+        <Button disabled={!isFormValid()} onClick={handleSubmit} type='primary'>
+          {currentStep === 2 ? 'Submit' : 'Next'}
+        </Button>
+      </Footer>
     </Drawer>
   );
 };

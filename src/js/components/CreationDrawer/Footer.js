@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from 'antd';
 
-const Footer = ({ isValid, onCancel, onTest, onSubmit }) => (
+const Footer = ({ children }) => (
   <div
     style={{
       position: 'absolute',
@@ -14,15 +14,7 @@ const Footer = ({ isValid, onCancel, onTest, onSubmit }) => (
       textAlign: 'right',
     }}
   >
-    <Button onClick={onCancel} style={{ marginRight: 8 }}>
-      Cancel
-    </Button>
-    <Button onClick={onTest} style={{ marginRight: 8 }}>
-      See matches
-    </Button>
-    <Button disabled={!isValid} onClick={onSubmit} type='primary'>
-      Submit
-    </Button>
+    {children}
   </div>
 );
 

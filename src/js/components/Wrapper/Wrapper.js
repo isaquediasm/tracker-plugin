@@ -5,6 +5,7 @@ import { findMatches, getElementIdentifier } from '../../utils';
 import { isTagAllowed, isInteractive, isExternal } from '../../utils/validate';
 import { ListenerService } from '../../utils/listeners';
 import { CreationProvider } from '../CreationContext';
+import EventsDrawer from '../EventsDrawer';
 
 import 'antd/lib/button/style/index.css';
 import './antd.scss';
@@ -131,7 +132,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
   const [selectedElement, setSelectedElement] = useState(null);
   const [refElement, setRefElement] = useState(null);
   const [currentEvent, setCurrentEvent] = useState({});
-
+  const [createdEvents, setCreatedEvents] = useState([]);
+  const [isVisualizingEvents, setIsVisualizingEvents] = useState(false);
   const documentListener = cb => ev => {
     const { target, path } = ev;
 
@@ -208,13 +210,22 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     console.log('##matches', searchedMatches);
   };
 
-  const handleSubmit = ev => {
-    listenerService.removeListeners(document, 'click');
-    setIsEditing(false);
-    setIsCreating(false);
+  const handleSubmit = useCallback(
+    ev => {
+      listenerService.removeListeners(document, 'click');
+      setIsEditing(false);
+      setIsCreating(false);
 
-    message.success(`Your event "${ev.eventName}" was successfully created`, 5);
-  };
+      console.log('##submited', ev);
+      message.success(
+        `Your event "${ev.eventName}" was successfully created`,
+        5
+      );
+
+      setCreatedEvents([...createdEvents, ev]);
+    },
+    [createdEvents]
+  );
 
   const handleEdit = () => {
     classManipulation.removeAddedClass();
@@ -232,6 +243,10 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     setIsTesting(false);
     setIsEditing(false);
     setIsCreating(false);
+  };
+
+  const handleVisualize = () => {
+    setIsVisualizingEvents(!isVisualizingEvents);
   };
 
   const handleAddRefMode = () => {
@@ -260,7 +275,12 @@ const Wrapper = ({ onClose, onSetCreate }) => {
       <ActionButtons>
         {!isCreating && !isTesting && (
           <>
-            <Button style={{ marginRight: 8 }} size='large' type='default'>
+            <Button
+              onClick={handleVisualize}
+              style={{ marginRight: 8 }}
+              size='large'
+              type='default'
+            >
               See All Events
             </Button>
 
@@ -319,6 +339,14 @@ const Wrapper = ({ onClose, onSetCreate }) => {
             onAddRef={handleAddRefMode}
           />
         </CreationProvider>
+      )}
+
+      {isVisualizingEvents && (
+        <EventsDrawer
+          onClose={handleVisualize}
+          visible={isVisualizingEvents}
+          events={createdEvents}
+        />
       )}
     </div>
   );

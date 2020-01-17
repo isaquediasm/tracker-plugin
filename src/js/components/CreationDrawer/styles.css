@@ -15,7 +15,7 @@
 @import '~antd/lib/tooltip/style/index.css';
 @import '~antd/lib/table/style/index.css';
 @import '~antd/lib/modal/style/index.css';
-
+@import '~antd/lib/steps/style/index.css';
 
 .ant-drawer,
 .tracker-element {
