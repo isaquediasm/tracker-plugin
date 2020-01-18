@@ -163,7 +163,7 @@ const CreationDrawer = ({
   currentEvent,
   refElement,
 }) => {
-  const [eventName, setEventName] = useState(getEventName(selectedElement));
+  const [eventName, setEventName] = useState('');
   const [eventValue, setEventValue] = useState();
   const [occurenceLimit, setOccurenceLimit] = useState(0);
   const [rules, setRules] = useState({});
@@ -188,12 +188,13 @@ const CreationDrawer = ({
   }, [currentEvent]);
 
   useEffect(() => {
+    setEventName(getEventName(selectedElement));
     setTriggers(availableTriggers(selectedElement));
   }, [selectedElement]);
 
   const rulesValues = Object.values(rules);
-  const handleNameChange = useCallback(value => {
-    console.log('##value', value);
+  const handleNameChange = useCallback(({ target }) => {
+    setEventName(target.value);
   }, []);
 
   const handleRuleChange = useCallback(({ idx, prop, value, checked }) => {
@@ -232,7 +233,13 @@ const CreationDrawer = ({
       return;
     }
 
-    onSubmit({ rules, eventName, eventValue, occurenceLimit });
+    onSubmit({
+      rules,
+      eventName,
+      eventValue,
+      occurenceLimit,
+      trigger: selectedTrigger,
+    });
   }, [currentStep, rules, eventName, eventValue, occurenceLimit]);
 
   const handleTest = () => {
@@ -240,11 +247,11 @@ const CreationDrawer = ({
   };
 
   const isFormValid = () => {
-    const hasRules = Object.keys(rules).length > 0 && matches > 0;
+    const hasRules =
+      currentStep === 0 || (Object.keys(rules).length > 0 && matches > 0);
+    const hasName = eventName.length > 0;
 
-    if (currentStep === 0) return true;
-
-    return currentStep === 0 || hasRules;
+    return hasName && hasRules;
   };
 
   const handleEventValueChange = useCallback(value => {
@@ -273,14 +280,7 @@ const CreationDrawer = ({
         current={currentStep}
       >
         <Step title='Settings' />
-        <Step
-          /*  status={
-            Object.keys(rules).length && currentStep !== 1
-              ? 'finish'
-              : 'process'
-          } */
-          title='Element'
-        />
+        <Step title='Element' />
         <Step disabled={!Object.keys(rules).length} title='Event Value' />
       </Steps>
       <br />
@@ -289,7 +289,7 @@ const CreationDrawer = ({
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item label='Event Name'>
-              <Input onChange={console.log} defaultValue={eventName} />
+              <Input onChange={handleNameChange} defaultValue={eventName} />
             </Form.Item>
           </Col>
           <Col span={12}>

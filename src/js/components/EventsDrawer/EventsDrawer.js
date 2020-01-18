@@ -11,10 +11,16 @@ const EventsDrawer = ({ events, visible = false, onClose }) => {
       key: 'eventName',
     },
     {
+      title: 'Trigger',
+      dataIndex: 'trigger',
+      key: 'trigger',
+    },
+    {
       title: 'Rules',
       dataIndex: 'rulesCount',
       key: 'rulesCount',
     },
+
     {
       title: 'Matches',
       dataIndex: 'matches',
@@ -46,7 +52,7 @@ const EventsDrawer = ({ events, visible = false, onClose }) => {
       title='Created Events'
       placement='right'
       closable
-      width={700}
+      width={650}
       onClose={onClose}
       visible={visible}
     >
