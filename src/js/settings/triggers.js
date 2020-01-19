@@ -59,13 +59,17 @@ export const mouseEvents = {
   ],
 };
 
-export const inputEvents = {
+export const formEvents = {
   // should validate here if elements is an input
-  rules: element => !!element,
   events: [
     {
       name: 'change',
       description: `The change event is fired for <input>, <select>, and <textarea> elements when a change to the element's value is committed by the user.`,
+      rules: element => element.tagName === 'INPUT',
+    },
+    {
+      name: 'submit',
+      rules: element => element.tagName === 'FORM',
     },
   ],
 };
@@ -77,5 +81,7 @@ export const inputEvents = {
  * @param {*} element
  */
 export function availableTriggers(element) {
-  return mouseEvents;
+  const _formEvents = formEvents.events.filter(item => item.rules(element));
+
+  return { events: [...mouseEvents.events, ..._formEvents] };
 }

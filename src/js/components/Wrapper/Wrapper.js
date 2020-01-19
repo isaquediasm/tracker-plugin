@@ -213,6 +213,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
           name: ev.eventName,
           value: eventValue,
         };
+
         console.log('##event dispatched', finalEvent);
       });
     }
