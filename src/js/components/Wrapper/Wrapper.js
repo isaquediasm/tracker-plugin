@@ -193,6 +193,31 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     });
   };
 
+  function createListeners(ev) {
+    const helpers = {
+      property: (el, prop) => el[prop],
+      attribute: (el, attr) => el.getAttribute(attr),
+    };
+
+    const matches = findMatches(ev.rules);
+
+    for (let el of matches) {
+      listenerService.addListener(el, ev.trigger, () => {
+        const eventValue = Object.assign(
+          ...ev.eventValue.map(item => ({
+            [item.name]: helpers[item.type](el, item.attribute),
+          }))
+        );
+
+        const finalEvent = {
+          name: ev.eventName,
+          value: eventValue,
+        };
+        console.log('##event dispatched', finalEvent);
+      });
+    }
+  }
+
   const handleTesting = ev => {
     const searchedMatches = findMatches(ev.rules);
 
@@ -221,6 +246,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
         `Your event "${ev.eventName}" was successfully created`,
         5
       );
+
+      createListeners(ev);
 
       setCreatedEvents([...createdEvents, ev]);
     },
