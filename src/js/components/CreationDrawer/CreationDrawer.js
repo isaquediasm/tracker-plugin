@@ -165,7 +165,7 @@ const CreationDrawer = ({
 }) => {
   const [eventName, setEventName] = useState('');
   const [eventValue, setEventValue] = useState();
-  const [occurenceLimit, setOccurenceLimit] = useState(0);
+  const [occurrenceLimit, setoccurrenceLimit] = useState('*');
   const [rules, setRules] = useState({});
   const [matches, setMatches] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -179,12 +179,12 @@ const CreationDrawer = ({
     if (!Object.keys(currentEvent).length) return;
 
     console.log('##currEvent', currentEvent);
-    const { rules, eventName, eventValue, occurenceLimit } = currentEvent;
+    const { rules, eventName, eventValue, occurrenceLimit } = currentEvent;
 
     setEventName(eventName);
     setRules(rules);
     setEventValue(eventValue);
-    setOccurenceLimit(occurenceLimit);
+    setoccurrenceLimit(occurrenceLimit);
   }, [currentEvent]);
 
   useEffect(() => {
@@ -224,7 +224,7 @@ const CreationDrawer = ({
   }, []);
 
   const handleRadioChange = useCallback(({ target }) => {
-    setOccurenceLimit(target.value);
+    setoccurrenceLimit(target.value);
   }, []);
 
   const handleSubmit = useCallback(() => {
@@ -237,13 +237,13 @@ const CreationDrawer = ({
       rules,
       eventName,
       eventValue,
-      occurenceLimit,
+      occurrenceLimit,
       trigger: selectedTrigger,
     });
-  }, [currentStep, rules, eventName, eventValue, occurenceLimit]);
+  }, [currentStep, rules, eventName, eventValue, occurrenceLimit]);
 
   const handleTest = () => {
-    onTest({ rules, eventName, eventValue, occurenceLimit });
+    onTest({ rules, eventName, eventValue, occurrenceLimit });
   };
 
   const isFormValid = () => {
@@ -316,10 +316,10 @@ const CreationDrawer = ({
             </Form.Item>
           </Col>
           <Col span={24}>
-            <Form.Item label='Event Occurence'>
-              <Radio.Group onChange={handleRadioChange} value={occurenceLimit}>
-                <Radio value={0}>Any match across the application</Radio>
-                <Radio value={1}>
+            <Form.Item label='Event occurrence'>
+              <Radio.Group onChange={handleRadioChange} value={occurrenceLimit}>
+                <Radio value={'*'}>Any match across the application</Radio>
+                <Radio value={'PAGE'}>
                   Only matches on this page ({window.location.pathname})
                 </Radio>
               </Radio.Group>
@@ -388,10 +388,10 @@ const CreationDrawer = ({
         </Row>
         <Row gutter={16}>
           <Col span={24}>
-            <Form.Item label='Event Occurence'>
+            <Form.Item label='Event occurrence'>
               <Radio.Group
-                onChange={handleRadioChange(setOccurenceLimit)}
-                value={occurenceLimit}
+                onChange={handleRadioChange(setoccurrenceLimit)}
+                value={occurrenceLimit}
               >
                 <Radio value={0}>Any match across the application</Radio>
                 <Radio value={1}>

@@ -6,6 +6,7 @@ import { isTagAllowed, isInteractive, isExternal } from '../../utils/validate';
 import { ListenerService } from '../../utils/listeners';
 import { CreationProvider } from '../CreationContext';
 import EventsDrawer from '../EventsDrawer';
+import { events } from '../../utils/events';
 
 import 'antd/lib/button/style/index.css';
 import './antd.scss';
@@ -242,7 +243,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
       setIsEditing(false);
       setIsCreating(false);
 
-      console.log('##submited', ev);
+      events.create(ev);
+
       message.success(
         `Your event "${ev.eventName}" was successfully created`,
         5

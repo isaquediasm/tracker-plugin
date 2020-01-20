@@ -1,7 +1,7 @@
 export async function http(endpoint, options) {
   const API_URL = 'http://localhost:9001/api';
   const JWT_TOKEN =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVlMGQyMDJlYmI3MzExM2U4OWUzMDdhMCIsImlhdCI6MTU3ODAwMDc3OSwiZXhwIjoxNTg2NjQwNzc5fQ.u9UrPhgwmsfvEdCeI0_sk-gT_IiPadyb8bHc0h0Wgts';
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVlMTYxNTIwMGQxOTUxMWM3MGE4Mzg5MCIsImlhdCI6MTU3OTQ1MzIyOCwiZXhwIjoxNTg4MDkzMjI4fQ.C7sEkB0TKquIV8zJLhULshanlmNDnOG1nWK7ypujKSM';
 
   const headers = {
     headers: {
