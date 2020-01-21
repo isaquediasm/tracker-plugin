@@ -4,6 +4,7 @@ import Wrapper from './components/Wrapper';
 import React from 'react';
 import { render } from 'react-dom';
 import { events } from './utils/events';
+import apps from './modules/apps';
 import { createListeners } from './utils';
 
 class Inject extends ContentScript {
@@ -13,23 +14,16 @@ class Inject extends ContentScript {
     window.onload = () => {
       const topbar = document.createElement('div');
       topbar.id = 'tracker-app-container';
-
       document.body.appendChild(topbar);
     };
 
-    document.addEventListener('mouseup', ev => {
-      console.log(ev.button);
-    });
-
-    window.oncontextmenu = selectedElement => {
-      this.state = { ...this.state, selectedElement, visible: true };
-      /*      this.setState({ selectedElement: ev.target }); */
-    };
-
+    this.validateApp();
     setTimeout(this.updateDOM, 3000);
 
     this.loadEvents();
   }
+
+  validateApp = async () => {};
 
   // TODO: Validate if rules set is undefined
   loadEvents = async () => {

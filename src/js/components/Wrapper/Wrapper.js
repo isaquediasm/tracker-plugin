@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { message, notification, Button, Tooltip } from 'antd';
 import CreationDrawer from '../CreationDrawer';
 import { findMatches, getElementIdentifier } from '../../utils';
@@ -7,6 +7,7 @@ import { ListenerService } from '../../utils/listeners';
 import { CreationProvider } from '../CreationContext';
 import EventsDrawer from '../EventsDrawer';
 import { events } from '../../utils/events';
+import apps from '../../modules/apps';
 
 import 'antd/lib/button/style/index.css';
 import './antd.scss';
@@ -135,6 +136,13 @@ const Wrapper = ({ onClose, onSetCreate }) => {
   const [currentEvent, setCurrentEvent] = useState({});
   const [createdEvents, setCreatedEvents] = useState([]);
   const [isVisualizingEvents, setIsVisualizingEvents] = useState(false);
+
+  useEffect(async () => {
+    const appList = await apps.list();
+
+    console.log('##list', appList);
+  });
+
   const documentListener = cb => ev => {
     const { target, path } = ev;
 
@@ -291,17 +299,8 @@ const Wrapper = ({ onClose, onSetCreate }) => {
     });
   };
 
-  /*   const eventsMenu = (
-    <Menu onClick={console.log}>
-      <Menu.Item key={'click'}>Click Event</Menu.Item>
-      <Menu.Item key={'modal'}>Modal Event</Menu.Item>
-      <Menu.Item key={'form'}>3rd item</Menu.Item>
-    </Menu>
-  ); */
-  console.log('##re-rendered', isEditing, isCreating, selectedElement);
   return (
     <div className='tracker-menu'>
-      {/* <Header isCreating={isCreating} /> */}
       <ActionButtons>
         {!isCreating && !isTesting && (
           <>
@@ -314,11 +313,6 @@ const Wrapper = ({ onClose, onSetCreate }) => {
               See All Events
             </Button>
 
-            {/*  <Dropdown overlay={menu}>
-              <Button>
-                Add New <Icon type='down' />
-              </Button>
-            </Dropdown> */}
             <Button
               onClick={handleCreation}
               type='primary'

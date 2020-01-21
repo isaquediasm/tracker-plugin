@@ -1,4 +1,4 @@
-import { http } from './api';
+import { http } from '../utils/api';
 
 export const events = {
   async create(ev) {

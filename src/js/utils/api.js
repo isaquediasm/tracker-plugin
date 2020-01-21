@@ -9,7 +9,7 @@ export async function http(endpoint, options) {
     },
   };
 
-  const res = await fetch(`${API_URL}/events`, {
+  const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     ...headers,
   });
