@@ -6,7 +6,10 @@ import { render } from 'react-dom';
 import { events } from './utils/events';
 import apps from './modules/apps';
 import { createListeners } from './utils';
+import { Provider } from 'react-redux';
+import configureStore from './configureStore';
 
+const store = configureStore();
 class Inject extends ContentScript {
   constructor() {
     super();
@@ -122,7 +125,13 @@ class Inject extends ContentScript {
       if (container === null) return this.updateDOM();
 
       return render(
-        <Wrapper {...props} onSetCreate={this.onSetCreate} onClose={onClose} />,
+        <Provider store={store}>
+          <Wrapper
+            {...props}
+            onSetCreate={this.onSetCreate}
+            onClose={onClose}
+          />
+        </Provider>,
         window.document.getElementById('tracker-app-container')
       );
     }, 1000);

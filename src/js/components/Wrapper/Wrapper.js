@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { message, notification, Button, Tooltip } from 'antd';
+import { useDispatch } from 'react-redux';
 import CreationDrawer from '../CreationDrawer';
 import { findMatches, getElementIdentifier } from '../../utils';
 import { isTagAllowed, isInteractive, isExternal } from '../../utils/validate';
@@ -8,6 +9,8 @@ import { CreationProvider } from '../CreationContext';
 import EventsDrawer from '../EventsDrawer';
 import { events } from '../../utils/events';
 import apps from '../../modules/apps';
+import { actions, selectors } from '@isaquediasm/services/events';
+import { useSelector } from 'react-redux';
 
 import 'antd/lib/button/style/index.css';
 import './antd.scss';
@@ -136,12 +139,15 @@ const Wrapper = ({ onClose, onSetCreate }) => {
   const [currentEvent, setCurrentEvent] = useState({});
   const [createdEvents, setCreatedEvents] = useState([]);
   const [isVisualizingEvents, setIsVisualizingEvents] = useState(false);
+  const dispatch = useDispatch();
+  const selector = useSelector(selectors.selectEvents);
 
+  /*   console.log('##event', selector);
+  dispatch(actions.loadEvents);
   useEffect(async () => {
-    const appList = await apps.list();
-
-    console.log('##list', appList);
-  });
+    console.log('##dispatch');
+    dispatch(actions.loadEvents);
+  }); */
 
   const documentListener = cb => ev => {
     const { target, path } = ev;
@@ -199,6 +205,7 @@ const Wrapper = ({ onClose, onSetCreate }) => {
       listenerService.removeAll(document, 'mouseover');
       setSelectedElement(element);
       setIsCreating(true);
+      setIsEditing(true);
     });
   };
 
